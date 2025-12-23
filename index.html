@@ -93,31 +93,123 @@
             color: #999;
             padding: 20px;
         }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .schedule-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .schedule-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .schedule-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .highlight {
+            background: #fff3cd !important;
+            font-weight: bold;
+        }
+        
+        .wait-short {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .wait-long {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚇 원시→초지 환승</h1>
         
-        <div class="time-display">
-            <div class="current-time" id="currentTime">--:--</div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('current')">현재 대기시간</button>
+            <button class="tab" onclick="switchTab('schedule')">전체 시간표</button>
         </div>
         
-        <div class="info-box">
-            <div class="info-label">원시역 출발</div>
-            <div class="info-value" id="departureTime">--:--</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">초지역 도착</div>
-            <div class="info-value" id="arrivalTime">--:--</div>
-        </div>
-        
-        <div class="wait-time">
-            <div class="label">환승 대기시간</div>
-            <div class="value" id="waitTime">
-                <span id="waitMinutes">-</span><span style="font-size: 32px;">분</span>
+        <div id="currentTab" class="tab-content active">
+            <div class="time-display">
+                <div class="current-time" id="currentTime">--:--</div>
             </div>
+            
+            <div class="info-box">
+                <div class="info-label">원시역 출발</div>
+                <div class="info-value" id="departureTime">--:--</div>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-label">초지역 도착</div>
+                <div class="info-value" id="arrivalTime">--:--</div>
+            </div>
+            
+            <div class="wait-time">
+                <div class="label">환승 대기시간</div>
+                <div class="value" id="waitTime">
+                    <span id="waitMinutes">-</span><span style="font-size: 32px;">분</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="scheduleTab" class="tab-content">
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>원시 출발</th>
+                        <th>초지 출발</th>
+                        <th>대기시간</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -182,9 +274,63 @@
                 document.getElementById('waitMinutes').textContent = '-';
             }
         }
+        
+        function switchTab(tabName) {
+            // 탭 버튼 활성화 상태 변경
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 탭 콘텐츠 표시/숨김
+            document.getElementById('currentTab').classList.remove('active');
+            document.getElementById('scheduleTab').classList.remove('active');
+            
+            if (tabName === 'current') {
+                document.getElementById('currentTab').classList.add('active');
+            } else {
+                document.getElementById('scheduleTab').classList.add('active');
+                updateScheduleTable();
+            }
+        }
+        
+        function updateScheduleTable() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const currentMinutes = timeToMinutes(currentTime);
+            
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+            
+            scheduleData.forEach(train => {
+                const row = document.createElement('tr');
+                const depMinutes = timeToMinutes(train.departure);
+                
+                // 현재 시간과 가장 가까운 다음 열차 강조
+                if (depMinutes >= currentMinutes && !tbody.querySelector('.highlight')) {
+                    row.classList.add('highlight');
+                }
+                
+                // 대기시간에 따라 색상 적용
+                let waitClass = '';
+                if (train.wait <= 5) {
+                    waitClass = 'wait-short';
+                } else if (train.wait >= 15) {
+                    waitClass = 'wait-long';
+                }
+                
+                row.innerHTML = `
+                    <td>${train.departure}</td>
+                    <td>${train.arrival}</td>
+                    <td class="${waitClass}">${train.wait}분</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
 
         // 초기 실행
         updateDisplay();
+        updateScheduleTable();
         
         // 1초마다 업데이트
         setInterval(updateDisplay, 1000);
