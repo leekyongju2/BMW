@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환승 대기시간</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .time-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .current-time {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .info-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .wait-time {
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .wait-time .label {
+            font-size: 16px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .wait-time .value {
+            font-size: 56px;
+            font-weight: bold;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚇 원시→초지 환승</h1>
+        
+        <div class="time-display">
+            <div class="current-time" id="currentTime">--:--</div>
+        </div>
+        
+        <div class="info-box">
+            <div class="info-label">원시역 출발</div>
+            <div class="info-value" id="departureTime">--:--</div>
+        </div>
+        
+        <div class="info-box">
+            <div class="info-label">초지역 도착</div>
+            <div class="info-value" id="arrivalTime">--:--</div>
+        </div>
+        
+        <div class="wait-time">
+            <div class="label">환승 대기시간</div>
+            <div class="value" id="waitTime">
+                <span id="waitMinutes">-</span><span style="font-size: 32px;">분</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scheduleData = [
+            { departure: "17:31", arrival: "17:52", wait: 9 },
+            { departure: "17:43", arrival: "18:03", wait: 8 },
+            { departure: "17:51", arrival: "18:03", wait: 0 },
+            { departure: "18:02", arrival: "18:33", wait: 19 },
+            { departure: "18:14", arrival: "18:33", wait: 7 },
+            { departure: "18:26", arrival: "18:48", wait: 10 },
+            { departure: "18:39", arrival: "18:52", wait: 1 },
+            { departure: "18:52", arrival: "19:16", wait: 12 },
+            { departure: "19:03", arrival: "19:16", wait: 1 },
+            { departure: "19:13", arrival: "19:29", wait: 4 },
+            { departure: "19:24", arrival: "19:54", wait: 18 },
+            { departure: "19:37", arrival: "19:54", wait: 5 },
+            { departure: "19:53", arrival: "20:06", wait: 1 },
+            { departure: "20:10", arrival: "20:38", wait: 16 },
+            { departure: "20:28", arrival: "21:14", wait: 34 },
+            { departure: "20:42", arrival: "21:14", wait: 20 },
+            { departure: "20:55", arrival: "21:14", wait: 7 },
+            { departure: "21:08", arrival: "21:36", wait: 16 },
+            { departure: "21:23", arrival: "21:36", wait: 1 }
+        ];
+
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function findNextDeparture(currentTime) {
+            const currentMinutes = timeToMinutes(currentTime);
+            
+            for (let i = 0; i < scheduleData.length; i++) {
+                const depMinutes = timeToMinutes(scheduleData[i].departure);
+                if (depMinutes >= currentMinutes) {
+                    return scheduleData[i];
+                }
+            }
+            
+            return null;
+        }
+
+        function updateDisplay() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const currentTime = `${hours}:${minutes}`;
+            
+            document.getElementById('currentTime').textContent = currentTime;
+            
+            const nextTrain = findNextDeparture(currentTime);
+            
+            if (nextTrain) {
+                document.getElementById('departureTime').textContent = nextTrain.departure;
+                document.getElementById('arrivalTime').textContent = nextTrain.arrival;
+                document.getElementById('waitMinutes').textContent = nextTrain.wait;
+            } else {
+                document.getElementById('departureTime').textContent = '운행종료';
+                document.getElementById('arrivalTime').textContent = '--:--';
+                document.getElementById('waitMinutes').textContent = '-';
+            }
+        }
+
+        // 초기 실행
+        updateDisplay();
+        
+        // 1초마다 업데이트
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
