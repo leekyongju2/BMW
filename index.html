@@ -164,12 +164,22 @@
             color: #dc3545;
             font-weight: bold;
         }
+        
+        .info-note {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚇 원시→초지 환승</h1>
-        
+        <h2> 업데이트 25.12.24 </h2>
         <div class="tabs">
             <button class="tab active" onclick="switchTab('current')">현재 대기시간</button>
             <button class="tab" onclick="switchTab('schedule')">전체 시간표</button>
@@ -186,7 +196,7 @@
             </div>
             
             <div class="info-box">
-                <div class="info-label">초지역 도착</div>
+                <div class="info-label">초지역 출발</div>
                 <div class="info-value" id="arrivalTime">--:--</div>
             </div>
             
@@ -210,6 +220,10 @@
                 <tbody id="scheduleBody">
                 </tbody>
             </table>
+        </div>
+        
+        <div class="info-note">
+            ℹ️ 원시역에서 초지역까지 이동시간: 약 12분
         </div>
     </div>
 
